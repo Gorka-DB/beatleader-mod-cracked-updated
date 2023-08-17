@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using BeatLeader.Utils;
 using BS_Utils.Gameplay;
@@ -8,6 +9,10 @@ using Oculus.Platform;
 using Steamworks;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.UIElements;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.IO;
 
 namespace BeatLeader.API {
     internal static class Authentication {
@@ -85,6 +90,14 @@ namespace BeatLeader.API {
                 _locked = false;
             }
         }
+        public static string GenerateRandomDigits(int length) {
+            var random = new System.Random();
+            var stringBuilder = new StringBuilder(length);
+            for (int i = 0; i < length; i++) {
+                stringBuilder.Append(random.Next(0, 10));  // Random digit between 0 and 9
+            }
+            return stringBuilder.ToString();
+        }
 
         private static IEnumerator DoLogin(Action onSuccess, Action<string> onFail) {
             if (!TryGetPlatformProvider(Platform, out var provider)) {
@@ -107,7 +120,40 @@ namespace BeatLeader.API {
                 new MultipartFormDataSection("provider", provider),
                 new MultipartFormDataSection("returnUrl", "/")
             };
-            var request = UnityWebRequest.Post(string.Format(BLConstants.SIGNIN_WITH_TICKET, authToken), form);
+
+            var request = UnityWebRequest.Post("https://api.beatleader.xyz/signinoculus", form);
+            request.SetRequestHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/116.0");
+            request.SetRequestHeader("Accept", "*/*");
+            request.SetRequestHeader("Accept-Language", "multiparten-GB,en;q=0.5");
+            request.SetRequestHeader("Alt-Used", "api.beatleader.xyz");
+
+            string beatSaberDirectory = UnityEngine.Application.dataPath;
+            string userDataPath = Path.Combine(beatSaberDirectory, "..", "UserData");
+            string jsonFilePath = Path.Combine(userDataPath, "BLLogInInfo.json");
+            JObject userLoginData = JObject.Parse(File.ReadAllText(jsonFilePath));
+
+            string username = userLoginData["username"].ToString();
+            string password = userLoginData["password"].ToString();
+
+            var randCode = GenerateRandomDigits(30);
+            request.SetRequestHeader("Content-Type", $"multipart/form-data; boundary=---------------------------{randCode}");
+            string requestBody =
+                $"-----------------------------{randCode}\r\n" +
+                "Content-Disposition: form-data; name=\"action\"\r\n" +
+                "\r\n" +
+                "login\r\n" +
+                $"-----------------------------{randCode}\r\n" +
+                "Content-Disposition: form-data; name=\"login\"\r\n" +
+                "\r\n" +
+                $"{username}\r\n" +
+                $"-----------------------------{randCode}\r\n" +
+                "Content-Disposition: form-data; name=\"password\"\r\n" +
+                "\r\n" +
+                $"{password}\r\n" +
+                $"-----------------------------{randCode}--\r\n"
+            ;
+            byte[] bodyRaw = Encoding.UTF8.GetBytes(requestBody);
+            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
             yield return request.SendWebRequest();
 
             switch (request.responseCode) {
