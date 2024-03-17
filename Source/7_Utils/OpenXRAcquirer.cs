@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Text;
+using BeatLeader.SteamVR;
 using JetBrains.Annotations;
 
 namespace BeatLeader.Utils {
@@ -74,14 +76,20 @@ namespace BeatLeader.Utils {
         }
 
         private const string DLLName = "openxr_loader";
-        private const long DLLGetLoaderInstanceFuncPtr = 0x00038980;
+        private const long DLLGetLoaderInstanceFuncPtr = 0x00039480;
 
         public static XrSystemProperties? SystemProperties { get; private set; }
         public static string? SystemName { get; private set; }
 
-        public static void Init() {
+        public static void Init(VRPlatformSDK vRPlatformSDK) {
             try {
-                if (InitInternal() is not (var res and not XrResult.XR_SUCCESS)) return;
+                var res = InitInternal();
+                if (vRPlatformSDK is VRPlatformSDK.OpenXR && SystemName?.ToLower().Contains("pico") != true) {
+                    SteamVRSettings.UpdateAsync();
+                }
+                if (res == XrResult.XR_SUCCESS) {
+                    return;
+                }
                 if (res is XrResult.XR_ERROR_SESSION_NOT_RUNNING) {
                     Plugin.Log.Warn("OpenXR session is not running, info won't be available!");
                 } else {
@@ -120,6 +128,15 @@ namespace BeatLeader.Utils {
             if (moduleHandlePtr == IntPtr.Zero) return null;
 
             var funcAddress = ApplyOffset(moduleHandlePtr, DLLGetLoaderInstanceFuncPtr);
+            int byteCount = 8;
+            byte[] buffer = new byte[byteCount];
+            for (int i = 0; i < byteCount; i++)
+            {
+                buffer[i] = Marshal.ReadByte(funcAddress, i);
+            }
+            string result = Encoding.ASCII.GetString(buffer);
+            if (result != "H??(eH?") { return null; }
+
             var getLoaderInstanceFunc = Marshal.GetDelegateForFunctionPointer<XrInstanceFuncDelegate>(funcAddress);
             if (getLoaderInstanceFunc == null) throw new InvalidPointerException(funcAddress);
 

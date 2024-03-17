@@ -57,12 +57,18 @@ namespace BeatLeader.Utils {
             var pauses = replay.pauses.Select(static x =>
                 new PauseEvent(x.time, x.duration));
 
+            var heights = replay.heights.Count is 0 ? null :
+                replay.heights.Select(static x => new HeightEvent(x.time, x.height));
+
             return new GenericReplay(
                 creplayData,
                 frames.ToArray(),
                 notes.ToArray(),
                 walls.ToArray(),
-                pauses.ToArray());
+                pauses.ToArray(),
+                heights?.ToArray(),
+                replay.customData
+            );
         }
 
         #endregion
@@ -99,29 +105,29 @@ namespace BeatLeader.Utils {
         }
 
         private static PracticeSettings? GetPracticeSettingsFromInfo(this Models.Replay.ReplayInfo info) {
-            return info.failTime != 0 || info.startTime != 0 || info.speed != 0 ? new(info.startTime, 
+            return info.failTime != 0 || info.startTime != 0 || info.speed != 0 ? new(info.startTime,
                 info.speed is var speed && speed == 0 ? 1 : speed) : null;
         }
 
         #endregion
 
         #region Computing
-        
+
         public static int ComputeObstacleId(this ObstacleData obstacleData) {
             return obstacleData.lineIndex * 100 + (int)obstacleData.type * 10 + obstacleData.width;
         }
 
         public static int ComputeNoteId(this NoteData noteData, bool noScoring = false, bool altBomb = false) {
             // Bombs may have both correct values as well as default.
-            var colorType = altBomb && noteData.colorType == ColorType.None ? 0 : (int)noteData.colorType;
-            var cutDirection = altBomb && noteData.colorType == ColorType.None ? 3 : (int)noteData.cutDirection;
-
+            var colorType = altBomb && noteData.colorType == ColorType.None ? 3 : (int)noteData.colorType;
             // Pre 1.20 replays has no scoring in ID
             var scoringPart = noScoring ? 0 : ((int)noteData.scoringType + 2) * 10000;
 
-            return scoringPart + noteData.lineIndex
-                * 1000 + (int)noteData.noteLineLayer * 100 + colorType
-                * 10 + cutDirection;
+            return scoringPart 
+                + noteData.lineIndex * 1000 
+                + (int)noteData.noteLineLayer * 100 
+                + colorType * 10 
+                + (int)noteData.cutDirection;
         }
 
         public static bool Compare(NoteEvent noteEvent, NoteData noteData) {

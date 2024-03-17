@@ -12,14 +12,14 @@
 
         public const string BEATLEADER_API_URL = "https://api.beatleader.xyz";
         
-        public const string BEATLEADER_WEBSITE_URL = "https://www.beatleader.xyz";
+        public const string BEATLEADER_WEBSITE_URL = "https://beatleader.xyz";
 
         #endregion
 
         #region Signin
         
         public const string SIGNIN_WITH_TICKET = //  /signin
-            BEATLEADER_API_URL + "/signin?ticket={0}";
+            BEATLEADER_API_URL + "/signin";
 
         public const string OCULUS_PC_SIGNIN = // /signin?action=oculuspc&token={user_id}
             BEATLEADER_WEBSITE_URL + "/signin/oculuspc?token={0}";

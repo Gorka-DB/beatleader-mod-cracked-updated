@@ -8,5 +8,7 @@ namespace BeatLeader.Models.AbstractReplay {
         IReadOnlyList<NoteEvent> NoteEvents { get; }
         IReadOnlyList<WallEvent> WallEvents { get; }
         IReadOnlyList<PauseEvent> PauseEvents { get; }
+        IReadOnlyList<HeightEvent>? HeightEvents { get; }
+        IReadOnlyDictionary<string, byte[]> CustomData { get; }
     }
 }

@@ -1,4 +1,4 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using BeatLeader.Models;
 using Hive.Versioning;
 using IPA.Config.Stores;
@@ -54,6 +54,12 @@ namespace BeatLeader {
 
         #endregion
 
+        #region LeaderboardDisplaySettings
+
+        public LeaderboardDisplaySettings LeaderboardDisplaySettings = ConfigDefaults.LeaderboardDisplaySettings;
+
+        #endregion
+
         #region ReplayerSettings
 
         public InternalReplayerCameraSettings InternalReplayerCameraSettings { get; set; } = ConfigDefaults.InternalReplayerCameraSettings;
@@ -80,6 +86,13 @@ namespace BeatLeader {
         
         [UseConverter]
         public ReplaySaveOption ReplaySavingOptions = ConfigDefaults.ReplaySavingOptions;
+
+        #endregion
+
+        #region Language
+
+        [UseConverter]
+        public BLLanguage SelectedLanguage = ConfigDefaults.SelectedLanguage;
 
         #endregion
 

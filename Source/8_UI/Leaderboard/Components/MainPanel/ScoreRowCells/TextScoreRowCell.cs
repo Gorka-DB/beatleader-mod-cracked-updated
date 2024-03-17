@@ -28,15 +28,19 @@ namespace BeatLeader.Components {
 
         #region Implementation
 
-        public void SetValue(object value) {
+        public override void SetValue(object? value) {
             textComponent.text = value == null ? "" : _formatter.Invoke(value);
             isEmpty = false;
         }
 
         public override void SetAlpha(float value) {
-            var tmp = (Color)textComponent.faceColor;
-            tmp.a = value;
-            textComponent.faceColor = tmp;
+            if (textComponent.overflowMode == TextOverflowModes.Ellipsis) {
+                var tmp = (Color)textComponent.faceColor;
+                tmp.a = value;
+                textComponent.faceColor = tmp;
+            } else {
+                textComponent.alpha = value;
+            }
         }
 
         protected override float CalculatePreferredWidth() {
