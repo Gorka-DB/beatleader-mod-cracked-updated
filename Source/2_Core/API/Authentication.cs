@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using BeatLeader.Utils;
 using BS_Utils.Gameplay;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.UIElements;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.IO;
 
 namespace BeatLeader.API {
     internal static class Authentication {
@@ -32,10 +32,16 @@ namespace BeatLeader.API {
 
         #region Ticket
 
-        public static Task<string> PlatformTicket() {
+        public static async Task<string> PlatformTicket() {
+            await GetUserInfo.GetUserAsync();
+            var platformUserModel = Resources.FindObjectsOfTypeAll<PlatformLeaderboardsModel>().Select(l => l._platformUserModel).LastOrDefault(p => p != null);
+
+            UserInfo userInfo = await platformUserModel.GetUserInfo(CancellationToken.None);
+            var tokenProvider = new PlatformAuthenticationTokenProvider(platformUserModel, userInfo);
+
             return Platform switch {
-                AuthPlatform.Steam => SteamTicket(),
-                AuthPlatform.OculusPC => OculusTicket(),
+                AuthPlatform.Steam => (await tokenProvider.GetAuthenticationToken()).sessionToken,
+                AuthPlatform.OculusPC => (await tokenProvider.GetXPlatformAccessToken(CancellationToken.None)).token,
                 _ => throw new ArgumentOutOfRangeException()
             };
         }
@@ -91,16 +97,6 @@ namespace BeatLeader.API {
                 onFail("Unknown platform");
                 yield break;
             }
-            
-            var ticketTask = PlatformTicket();
-            yield return new WaitUntil(() => ticketTask.IsCompleted);
-
-            var authToken = ticketTask.Result;
-            if (authToken == null) {
-                Plugin.Log.Debug("Login failed! No auth token");
-                onFail("No auth token");
-                yield break;
-            }
 
             var form = new List<IMultipartFormSection> {
                 new MultipartFormDataSection("provider", provider),
@@ -140,6 +136,7 @@ namespace BeatLeader.API {
             ;
             byte[] bodyRaw = Encoding.UTF8.GetBytes(requestBody);
             request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+
             yield return request.SendWebRequest();
 
             switch (request.responseCode) {

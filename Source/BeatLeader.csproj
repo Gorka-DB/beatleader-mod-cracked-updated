@@ -208,6 +208,9 @@
   <ItemGroup>
     <EmbeddedResource Include="9_Resources\AssetBundles\asset_bundle" />
     <EmbeddedResource Include="9_Resources\BSML\**\*.bsml" />
+    <Compile Remove="ZipToRelease\**" />
+    <EmbeddedResource Remove="ZipToRelease\**" />
+    <None Remove="ZipToRelease\**" />
     <EmbeddedResource Include="9_Resources\Localization.json" />
     <EmbeddedResource Include="manifest.json" />
   </ItemGroup>
