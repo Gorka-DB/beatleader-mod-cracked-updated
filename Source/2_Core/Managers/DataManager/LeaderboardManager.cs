@@ -2,23 +2,24 @@
 using BeatLeader.API.Methods;
 using BeatLeader.Manager;
 using BeatLeader.Models;
+using JetBrains.Annotations;
 using LeaderboardCore.Interfaces;
 using UnityEngine;
+using Zenject;
 
 namespace BeatLeader.DataManager {
     internal class LeaderboardManager : MonoBehaviour, INotifyLeaderboardSet {
         #region Properties
 
-        private ScoresScope _selectedScoreScope;
-        private ScoresContext _selectedScoreContext;
-        private int _lastSelectedPage = 1;
-        private IDifficultyBeatmap _lastSelectedBeatmap;
+        [Inject, UsedImplicitly]
+        private BeatmapLevelsModel _beatmapLevelsModel;
 
-        private string Hash => _lastSelectedBeatmap.level.levelID.Replace(CustomLevelLoader.kCustomLevelPrefixId, "");
-        private string Diff => _lastSelectedBeatmap.difficulty.ToString();
-        private string Mode => _lastSelectedBeatmap.parentDifficultyBeatmapSet.beatmapCharacteristic.serializedName;
+        private ScoresScope _selectedScoreScope;
+        private int _selectedScoreContext;
+        private int _lastSelectedPage = 1;
+        private BeatmapKey _lastSelectedBeatmap;
         private string Scope => _selectedScoreScope.ToString().ToLowerInvariant();
-        private string Context => _selectedScoreContext.ToString().ToLower();
+        private string Context => ScoresContexts.ContextForId(_selectedScoreContext).Key;
 
         #endregion
 
@@ -71,8 +72,8 @@ namespace BeatLeader.DataManager {
             bool enableFakeBloom;
 
             try {
-                var mainSettingsModel = Resources.FindObjectsOfTypeAll<MainSettingsModelSO>()[0];
-                enableFakeBloom = mainSettingsModel.mainEffectGraphicsSettings.value == 0;
+                var mainSystemInit = Resources.FindObjectsOfTypeAll<MainSystemInit>()[0];
+                enableFakeBloom = mainSystemInit._settingsManager.settings.quality.mainEffect == BeatSaber.Settings.QualitySettings.MainEffectOption.Off;
             } catch (Exception) {
                 enableFakeBloom = false;
             }
@@ -111,16 +112,16 @@ namespace BeatLeader.DataManager {
 
         private void LoadPlayerScores() {
             if (!ProfileManager.TryGetUserId(out var userId)) return;
-            ScoresRequest.SendPlayerScoresPageRequest(userId, Hash, Diff, Mode, Context, Scope, _lastSelectedPage);
+            ScoresRequest.SendPlayerScoresPageRequest(_lastSelectedBeatmap, userId, Context, Scope, _lastSelectedPage);
         }
 
         private void SeekPlayerScores() {
             if (!ProfileManager.TryGetUserId(out var userId)) return;
-            ScoresRequest.SendPlayerScoresSeekRequest(userId, Hash, Diff, Mode, Context, Scope);
+            ScoresRequest.SendPlayerScoresSeekRequest(_lastSelectedBeatmap, userId, Context, Scope);
         }
 
         private void LoadClanScores() {
-            ScoresRequest.SendClanScoresPageRequest(Hash, Diff, Mode, _lastSelectedPage);
+            ScoresRequest.SendClanScoresPageRequest(_lastSelectedBeatmap, _lastSelectedPage);
         }
 
         #endregion
@@ -130,7 +131,7 @@ namespace BeatLeader.DataManager {
         private LeaderboardKey _uploadLeaderboardKey;
 
         private void OnUploadRequestStateChanged(API.RequestState state, Score result, string failReason) {
-            if (_lastSelectedBeatmap == null) return;
+            if (!_lastSelectedBeatmap.IsValid()) return;
 
             switch (state) {
                 case API.RequestState.Started:
@@ -160,7 +161,7 @@ namespace BeatLeader.DataManager {
 
         private void OnCacheUpdated() {
             if (_leaderboardType is not LeaderboardType.SongDiffClanScores) return;
-            if (!LeaderboardsCache.TryGetLeaderboardInfo(LeaderboardState.SelectedBeatmapKey, out var cacheEntry)) return;
+            if (!LeaderboardsCache.TryGetLeaderboardInfo(LeaderboardState.SelectedLeaderboardKey, out var cacheEntry)) return;
             if (FormatUtils.GetRankedStatus(cacheEntry.DifficultyInfo) is RankedStatus.Ranked) return;
             _leaderboardType = LeaderboardType.SongDiffPlayerScores;
             TryUpdateScores();
@@ -175,14 +176,18 @@ namespace BeatLeader.DataManager {
             UpdateScores();
         }
 
-        public void OnLeaderboardSet(IDifficultyBeatmap difficultyBeatmap) {
-            Plugin.Log.Debug($"Selected beatmap: {difficultyBeatmap.level.songName}, diff: {difficultyBeatmap.difficulty}");
-            _lastSelectedBeatmap = difficultyBeatmap;
+        public void OnLeaderboardSet(BeatmapKey beatmapKey) {
+            var level = _beatmapLevelsModel.GetBeatmapLevel(beatmapKey.levelId);
+            if (level == null) return;
+
+            Plugin.Log.Debug($"OnLeaderboardSet: {beatmapKey.levelId}, diff: {beatmapKey.difficulty}");
+            _lastSelectedBeatmap = beatmapKey;
             _lastSelectedPage = 1;
 
             TryUpdateScores();
 
-            LeaderboardState.SelectedBeatmap = difficultyBeatmap;
+            LeaderboardState.SelectedBeatmapLevel = level;
+            LeaderboardState.SelectedBeatmapKey = beatmapKey;
         }
 
         private void OnScoresScopeWasSelected(ScoresScope scope) {
@@ -197,7 +202,7 @@ namespace BeatLeader.DataManager {
             }
         }
 
-        private void OnScoresContextWasChanged(ScoresContext context) {
+        private void OnScoresContextWasChanged(int context) {
             Plugin.Log.Debug($"Attempt to switch score context from [{_selectedScoreContext}] to [{context}]");
 
             if (_selectedScoreContext != context) {

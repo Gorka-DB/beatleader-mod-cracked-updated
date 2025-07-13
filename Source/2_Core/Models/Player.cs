@@ -1,21 +1,11 @@
 ﻿using System;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace BeatLeader.Models {
     public class User {
         public Player player;
         public Player[] friends;
-    }
-
-    [Flags]
-    public enum LeaderboardContexts
-    {
-        None = 0,
-        General = 1 << 1,
-        NoMods = 1 << 2,
-        NoPause = 1 << 3,
-        Golf = 1 << 4,
-        SCPM = 1 << 5
     }
 
     public interface IPlayer {
@@ -26,7 +16,7 @@ namespace BeatLeader.Models {
     }
 
     public class PlayerContextExtension : IPlayer {
-        public LeaderboardContexts context { get; set; }
+        public int context { get; set; }
         public float pp { get; set; }
 
         public int rank { get; set; }
@@ -48,7 +38,7 @@ namespace BeatLeader.Models {
         public PlayerContextExtension[]? contextExtensions;
         public ProfileSettings? profileSettings;
 
-        public Player ContextPlayer(LeaderboardContexts context) {
+        public Player ContextPlayer(int context) {
             var contextPlayer = this.contextExtensions?.FirstOrDefault(ce => ce.context == context);
             if (contextPlayer == null) {
                 return this;
@@ -76,13 +66,30 @@ namespace BeatLeader.Models {
         public string color;
         public string name;
         public string avatar;
+        public int rank;
+        public int captureLeaderboardsCount;
+        public float rankedPoolPercentCaptured;
     }
 
     public class ProfileSettings {
+        [JsonProperty("hue")]
+        private int? Hue {
+            set => hue = value ?? 0;
+        }
+        
+        [JsonProperty("saturation")]
+        private float? Saturation {
+            set => saturation = value ?? 0;
+        }
+                
+        [JsonIgnore]
+        public int hue;
+        
+        [JsonIgnore]
+        public float saturation;
+        
         public string message;
         public string effectName;
-        public int hue;
-        public float saturation;
     }
 
     public class ServiceIntegration {

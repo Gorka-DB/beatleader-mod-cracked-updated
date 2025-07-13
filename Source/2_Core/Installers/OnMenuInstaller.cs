@@ -1,8 +1,10 @@
-using BeatLeader.DataManager;
+﻿using BeatLeader.DataManager;
+using BeatLeader.Interop;
 using BeatLeader.ViewControllers;
 using BeatLeader.Replayer;
 using JetBrains.Annotations;
 using Zenject;
+using BeatLeader.Components;
 
 namespace BeatLeader.Installers {
     [UsedImplicitly]
@@ -13,6 +15,11 @@ namespace BeatLeader.Installers {
             BindLeaderboard();
             Container.Bind<ReplayerLauncher>().FromNewComponentOnNewGameObject().AsSingle().NonLazy();
             Container.Bind<ReplayerMenuLoader>().FromNewComponentOnNewGameObject().AsSingle().NonLazy();
+            if (HeckInterop.IsInstalled) {
+                Container.BindInterfacesTo<HeckNavigationFlowCoordinator>().FromNewComponentOnNewGameObject().AsSingle();
+            } else {
+                Container.Bind<IReplayerViewNavigator>().To<ReplayerMenuLoader>().FromResolve();
+            }
             Container.BindInterfacesAndSelfTo<ModifiersManager>().FromNewComponentOnNewGameObject().AsSingle().NonLazy();
             // Container.BindInterfacesAndSelfTo<MonkeyHeadManager>().AsSingle();
         }
@@ -30,6 +37,9 @@ namespace BeatLeader.Installers {
             Container.Bind<BeatLeaderMenuButtonManager>().FromNewComponentOnNewGameObject().AsSingle().NonLazy();
             Container.Bind<BeatLeaderFlowCoordinator>().FromNewComponentOnNewGameObject().AsSingle().NonLazy();
             Container.Bind<ReplayLaunchViewController>().FromNewComponentAsViewController().AsSingle();
+
+            _ = BeatmapDifficultyPanel.BeatmapDifficultySegmentedControl;
+            _ = BeatmapCharacteristicPanel.BeatmapCharacteristicSegmentedControl;
         }
     }
 }

@@ -31,7 +31,9 @@ namespace BeatLeader.Replayer.Tweaking {
             new RoomOffsetsTweak(),
             new ReplayFailTweak(),
             new ReplayFinishTweak(),
-            new JumpDistanceTweak()
+            new JumpDistanceTweak(),
+            new ScoringTweak(),
+            new SiraFPFCTweak()
         };
 
         #region Installation

@@ -38,12 +38,12 @@ namespace BeatLeader.Components {
         private IReplayManager _replayManager = null!;
         private bool _isInitialized;
 
-        public void Setup(IReplayManager replayManager, ReplayerMenuLoader loader) {
+        public void Setup(IReplayManager replayManager, IReplayerStarter starter) {
             _replayManager = replayManager;
             _replayManager.ReplaysDeletedEvent += HandleReplaysDeleted;
             _replayManager.ReplayDeletedEvent += HandleReplayDeleted;
             _replayManager.ReplayAddedEvent += HandleReplayAdded;
-            _replayPanel.Setup(loader);
+            _replayPanel.Setup(starter);
             _replayPanel.SetData(null);
             _isInitialized = true;
         }
@@ -146,6 +146,18 @@ namespace BeatLeader.Components {
         private void ShowLoadingScreen(bool show) {
             _loadingContainerObject.SetActive(show);
             _mainContainerCanvasGroup.alpha = show ? 0.2f : 1;
+        }
+
+        #endregion
+
+        #region Dismiss
+
+        public void PrepareForDismiss() {
+            _replayPanel.PrepareForDismiss();
+        }
+
+        public void PrepareForDisplay() {
+            _replayPanel.PrepareForDisplay();
         }
 
         #endregion

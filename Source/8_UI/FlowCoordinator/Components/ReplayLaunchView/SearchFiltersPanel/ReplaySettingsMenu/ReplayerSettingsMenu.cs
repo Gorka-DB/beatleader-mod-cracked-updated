@@ -37,6 +37,12 @@ namespace BeatLeader.Components {
             set => WriteFlag(ReplaySaveOption.ZeroScore, value);
         }
 
+        [UIValue("save-practice"), UsedImplicitly]
+        private bool SavePractice {
+            get => GetFlag(ReplaySaveOption.Practice);
+            set => WriteFlag(ReplaySaveOption.Practice, value);
+        }
+        
         [UIValue("save-ost"), UsedImplicitly]
         private bool SaveOst {
             get => GetFlag(ReplaySaveOption.OST);
@@ -63,7 +69,7 @@ namespace BeatLeader.Components {
             var interactable = SaveReplays;
             foreach (var toggle in _togglesContainer
                 .GetComponentsInChildren<ToggleSetting>()) {
-                toggle.interactable = interactable;
+                toggle.Interactable = interactable;
             }
         }
         

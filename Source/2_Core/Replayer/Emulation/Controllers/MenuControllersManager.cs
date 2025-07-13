@@ -1,4 +1,5 @@
 ﻿using BeatLeader.Utils;
+using BeatSaber.GameSettings;
 using IPA.Utilities;
 using UnityEngine;
 using VRUIControls;
@@ -10,6 +11,8 @@ namespace BeatLeader.Replayer {
         [Inject] private readonly PauseMenuManager _pauseMenuManager = null!;
         [Inject] private readonly DiContainer _diContainer = null!; 
         [Inject] private readonly VRInputModule _vrInputModule = null!;
+        [Inject] private readonly SettingsManager _settingsManager = null!;
+        [Inject] private readonly ControllerProfilesModel _controllersProfile = null!;
 
         public Transform HandsContainer { get; private set; } = null!;
         public VRController LeftHand { get; private set; } = null!;
@@ -25,8 +28,15 @@ namespace BeatLeader.Replayer {
             this.LoadResources();
 
             var menuHandsTransform = _pauseMenuManager.transform.Find("MenuControllers");
+            menuHandsTransform.gameObject.GetComponent<DeactivateAnimatorOnInputFocusCapture>().TryDestroy();
             LeftHand = Instantiate(menuHandsTransform.Find("ControllerLeft")).GetComponent<VRController>();
             RightHand = Instantiate(menuHandsTransform.Find("ControllerRight")).GetComponent<VRController>();
+
+            ((VRControllersValueSettingsOffsets)LeftHand._transformOffset).SetField("_settingsManager", _settingsManager);
+            ((VRControllersValueSettingsOffsets)RightHand._transformOffset).SetField("_settingsManager", _settingsManager);
+
+            ((VRControllersValueSettingsOffsets)LeftHand._transformOffset).SetField("_controllersProfile", _controllersProfile);
+            ((VRControllersValueSettingsOffsets)RightHand._transformOffset).SetField("_controllersProfile", _controllersProfile);
 
             _diContainer.InjectComponentsInChildren(LeftHand.gameObject);
             _diContainer.InjectComponentsInChildren(RightHand.gameObject);

@@ -56,15 +56,7 @@ namespace BeatLeader.DataManager {
             SaveHiddenPlayersCache();
         }
 
-        public static bool IsHidden(Player player) {
-            return player != null && HiddenPlayers.Contains(player.id);
-        }
-
-        #endregion
-
-        #region ModifyPlayer
-
-        public static Player ModifyPlayer(Player player) {
+        public static Player HidePlayerIfNeeded(Player player) {
             if (!IsHidden(player)) return player;
             
             return new Player() {
@@ -79,6 +71,10 @@ namespace BeatLeader.DataManager {
                 socials = Array.Empty<ServiceIntegration>(),
                 profileSettings = null
             };
+        }
+
+        public static bool IsHidden(Player player) {
+            return player != null && HiddenPlayers.Contains(player.id);
         }
 
         #endregion

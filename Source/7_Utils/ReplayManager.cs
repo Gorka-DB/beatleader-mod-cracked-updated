@@ -60,29 +60,37 @@ namespace BeatLeader.Utils {
             CachedReplay = null;
             if (!ValidatePlay(replay, playEndData)) {
                 Plugin.Log.Info("Validation failed, replay will not be saved!");
+                var tempheader = new GenericReplayHeader(this, "", replay);
+                CachedReplay = tempheader;
                 return null;
             }
 
-            var path = FormatFileName(replay, playEndData);
-            Plugin.Log.Info($"Replay will be saved as: {path}");
-            if (ConfigFileData.Instance.OverrideOldReplays) {
-                Plugin.Log.Warn("OverrideOldReplays is enabled, old replays will be deleted");
-                var info = replay.info;
-                if (_lastReplayHeaders is null) await LoadReplayHeadersAsync(token);
-                foreach (var replayHeader in _lastReplayHeaders!.Where(x =>
-                        x.ReplayInfo is { } i && i.PlayerID == info.playerID
-                        && i.SongName == info.songName && i.SongDifficulty == info.difficulty
-                        && i.SongMode == info.mode && i.SongHash == info.hash).ToArray()
-                ) {
-                    Plugin.Log.Info("Deleting old replay: " + Path.GetFileName(replayHeader.FilePath));
-                    ((IReplayFileManager)this).DeleteReplay(replayHeader);
+            var header = await Task.Run(async () => {
+                var path = FormatFileName(replay, playEndData);
+                Plugin.Log.Info($"Replay will be saved as: {path}");
+                if (ConfigFileData.Instance.OverrideOldReplays) {
+                    Plugin.Log.Warn("OverrideOldReplays is enabled, old replays will be deleted");
+                    var info = replay.info;
+                    if (_lastReplayHeaders is null) await LoadReplayHeadersAsync(token);
+                    foreach (var replayHeader in _lastReplayHeaders!.Where(x =>
+                            x.ReplayInfo is { } i && i.PlayerID == info.playerID
+                            && i.SongName == info.songName && i.SongDifficulty == info.difficulty
+                            && i.SongMode == info.mode && i.SongHash == info.hash).ToArray()
+                    ) {
+                        Plugin.Log.Info("Deleting old replay: " + Path.GetFileName(replayHeader.FilePath));
+                        ((IReplayFileManager)this).DeleteReplay(replayHeader);
+                    }
                 }
+
+                if (!TryWriteReplay(path, replay)) return null;
+                replay.info.levelEndType = playEndData.EndType;
+                var absolutePath = GetAbsoluteReplayPath(path);
+                return new GenericReplayHeader(this, absolutePath, replay);
+            });
+            if (header == null) {
+                return null;
             }
 
-            if (!TryWriteReplay(path, replay)) return null;
-            replay.info.levelEndType = playEndData.EndType;
-            var absolutePath = GetAbsoluteReplayPath(path);
-            var header = new GenericReplayHeader(this, absolutePath, replay);
             _lastReplayHeaders?.Add(header);
             CachedReplay = header;
             ReplayAddedEvent?.Invoke(header);
@@ -133,12 +141,24 @@ namespace BeatLeader.Utils {
 
         #endregion
 
+        private static bool IsSHA1Hash(string hash) {
+            return new Regex(@"\b[0-9a-fA-F]{40}\b").IsMatch(hash);
+        }
+        
         internal static void ValidateReplayInfo(ReplayInfo info, string? path) {
-            if (info.hash.Length > 40) info.hash = info.hash.Substring(0, 40);
+            //truncating hash if needed
+            var customLevel = IsSHA1Hash(info.hash);
+            var wipLevel = info.hash.EndsWith("WIP");
+            if (customLevel && !wipLevel && info.hash.Length > 40) {
+                info.hash = info.hash.Substring(0, 40);
+            }
+            //
             if (info.mode is var mode && mode.IndexOf('-') is var idx and not -1) {
                 info.mode = mode.Remove(idx, mode.Length - idx);
             }
-            if (path is not null && Path.GetFileName(path).Contains("exit")) info.levelEndType = LevelEndType.Quit;
+            if (path is not null && Path.GetFileName(path).Contains("exit")) {
+                info.levelEndType = LevelEndType.Quit;
+            }
         }
 
         [Pure]
@@ -146,7 +166,8 @@ namespace BeatLeader.Utils {
             var options = ConfigFileData.Instance.ReplaySavingOptions;
             return ConfigFileData.Instance.SaveLocalReplays && endData.EndType switch {
                     LevelEndType.Fail => options.HasFlag(ReplaySaveOption.Fail),
-                    LevelEndType.Quit or LevelEndType.Restart or LevelEndType.Practice => options.HasFlag(ReplaySaveOption.Exit),
+                    LevelEndType.Quit or LevelEndType.Restart => options.HasFlag(ReplaySaveOption.Exit),
+                    LevelEndType.Practice => options.HasFlag(ReplaySaveOption.Practice),
                     LevelEndType.Clear => true,
                     _ => false
                 } && (options.HasFlag(ReplaySaveOption.ZeroScore) || replay.info.score != 0);

@@ -3,7 +3,7 @@ using BeatLeader.Models;
 using BeatLeader.Utils;
 using HarmonyLib;
 using JetBrains.Annotations;
-using Polyglot;
+using BGLib.Polyglot;
 using TMPro;
 using UnityEngine;
 using Zenject;
@@ -42,11 +42,11 @@ namespace BeatLeader.DataManager {
         #region Events
 
         private void OnCacheWasChanged() {
-            UpdateModifiersMap(LeaderboardState.IsAnyBeatmapSelected, LeaderboardState.SelectedBeatmapKey);
+            UpdateModifiersMap(LeaderboardState.IsAnyBeatmapSelected, LeaderboardState.SelectedLeaderboardKey);
             UpdateToggles();
         }
 
-        private void OnSelectedBeatmapWasChanged(bool selectedAny, LeaderboardKey leaderboardKey, IDifficultyBeatmap beatmap) {
+        private void OnSelectedBeatmapWasChanged(bool selectedAny, LeaderboardKey leaderboardKey, BeatmapKey key, BeatmapLevel level) {
             UpdateModifiersMap(selectedAny, leaderboardKey);
             UpdateToggles();
         }
@@ -101,19 +101,22 @@ namespace BeatLeader.DataManager {
 
         private ModifiersMap _modifiersMap;
         private ModifiersRating? _modifiersRating;
+        private int _status = 0;
         private bool _modifiersAvailable;
 
         private void UpdateModifiersMap(bool isAnyBeatmapSelected, LeaderboardKey leaderboardKey) {
             if (!isAnyBeatmapSelected || !LeaderboardsCache.TryGetLeaderboardInfo(leaderboardKey, out var data)) {
                 GameplayModifiersPanelPatch.ModifiersMap = _modifiersMap = default;
                 GameplayModifiersPanelPatch.hasModifiers = _modifiersAvailable = false;
+                _status = 0;
                 _modifiersRating = default;
                 return;
             }
 
             GameplayModifiersPanelPatch.ModifiersMap = _modifiersMap = data.DifficultyInfo.modifierValues;
+            GameplayModifiersPanelPatch.ModifiersRating =_modifiersRating = data.DifficultyInfo.modifiersRating;
             GameplayModifiersPanelPatch.hasModifiers = _modifiersAvailable = true;
-            _modifiersRating = data.DifficultyInfo.modifiersRating;
+            _status = data.DifficultyInfo.status;
         }
 
         private void ApplyOverridenState(GameplayModifierToggle[] toggles) {
@@ -130,6 +133,16 @@ namespace BeatLeader.DataManager {
                         _ => 0
                     };
                     multiplierText.text = $"<color=yellow>★ {stars:F2}</color>";
+                    continue;
+                }
+                if (modCode is "NF") {
+                    if (_status == 3 || _status == 6) {
+                        multiplierText.text = "0% / 0pp";
+                    } else {
+                        toggle.Start();
+                    }
+
+
                     continue;
                 }
                 var multiplierValue = _modifiersAvailable ? _modifiersMap.GetMultiplier(modCode) : 0.0f;

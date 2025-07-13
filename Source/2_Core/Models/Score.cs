@@ -1,7 +1,17 @@
 ﻿using BeatLeader.Components;
+using BeatLeader.DataManager;
+using Newtonsoft.Json;
 
 namespace BeatLeader.Models {
     public class Score : IScoreRowContent {
+        [JsonProperty("player")]
+        public Player Player {
+            get => HiddenPlayersCache.HidePlayerIfNeeded(originalPlayer);
+            set => originalPlayer = value;
+        }
+
+        [JsonIgnore] public Player originalPlayer;
+
         public int id;
         public float accuracy;
         public float fcAccuracy;
@@ -19,10 +29,13 @@ namespace BeatLeader.Models {
         public bool fullCombo;
         public int hmd;
         public int controller;
+        public string? headsetName;
+        public string? controllerName;
         public string timeSet;
-        public Player player;
         public string replay;
         public string platform;
+
+        public int TotalMistakes => missedNotes + badCuts + bombCuts + wallsHit;
 
         #region IScoreRowContent implementation
 
@@ -47,15 +60,15 @@ namespace BeatLeader.Models {
         public object? GetValue(ScoreRowCellType cellType) {
             return cellType switch {
                 ScoreRowCellType.Rank => rank,
-                ScoreRowCellType.Country => player.country,
-                ScoreRowCellType.Avatar => new AvatarScoreRowCell.Data(player.avatar, player.profileSettings),
-                ScoreRowCellType.Username => player.name,
+                ScoreRowCellType.Country => Player.country,
+                ScoreRowCellType.Avatar => new AvatarScoreRowCell.Data(Player.avatar, Player.profileSettings),
+                ScoreRowCellType.Username => Player.name,
                 ScoreRowCellType.Modifiers => modifiers,
                 ScoreRowCellType.Accuracy => accuracy,
                 ScoreRowCellType.PerformancePoints => pp,
                 ScoreRowCellType.Score => modifiedScore,
-                ScoreRowCellType.Mistakes => missedNotes + badCuts + bombCuts + wallsHit,
-                ScoreRowCellType.Clans => player.clans,
+                ScoreRowCellType.Mistakes => TotalMistakes,
+                ScoreRowCellType.Clans => Player.clans,
                 ScoreRowCellType.Time => timeSet,
                 ScoreRowCellType.Pauses => pauses,
                 _ => default

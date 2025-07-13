@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using BeatLeader.Interop;
 using BeatLeader.Models;
@@ -69,11 +70,11 @@ namespace BeatLeader.Components {
 
         #region Init
 
-        private ReplayerMenuLoader? _menuLoader;
+        private IReplayerStarter? _starter;
         private bool _isInitialized;
 
-        public void Setup(ReplayerMenuLoader loader) {
-            _menuLoader = loader;
+        public void Setup(IReplayerStarter starter) {
+            _starter = starter;
             _isInitialized = true;
         }
 
@@ -89,6 +90,18 @@ namespace BeatLeader.Components {
             _downloadBeatmapPanel.DownloadAbilityChangedEvent += HandleDownloadAbilityChangedEvent;
 
             SetDownloadPanelActive(false);
+        }
+
+        #endregion
+
+        #region Dismiss
+
+        public void PrepareForDismiss() {
+            _replayStatisticsPanel.PrepareForDismiss();
+        }
+
+        public void PrepareForDisplay() {
+            _replayStatisticsPanel.PrepareForDisplay();
         }
 
         #endregion
@@ -144,6 +157,7 @@ namespace BeatLeader.Components {
             if (replay is not null) {
                 await Task.Run(() => stats = ReplayStatisticUtils.ComputeScoreStats(replay), token);
                 score = ReplayUtils.ComputeScore(replay);
+                score.accuracy = stats?.scoreGraphTracker?.graph.Last() ?? 0;
                 score.fcAccuracy = stats?.accuracyTracker.fcAcc ?? 0;
             }
             if (token.IsCancellationRequested) return;
@@ -153,12 +167,12 @@ namespace BeatLeader.Components {
         }
 
         private async Task RefreshAvailabilityAsync(IReplayInfo info, CancellationToken token) {
-            var beatmap = await _menuLoader!.LoadBeatmapAsync(
+            (var beatmap, var key) = await ReplayerMenuLoader.Instance!.LoadBeatmapAsync(
                 info.SongHash, info.SongMode, info.SongDifficulty, token);
             if (token.IsCancellationRequested) return;
             var invalid = beatmap is null;
             WatchButtonText = invalid ? DownloadText : WatchText;
-            WatchButtonInteractable = invalid || SongCoreInterop.ValidateRequirements(beatmap!);
+            WatchButtonInteractable = invalid || SongCoreInterop.ValidateRequirements(beatmap, (BeatmapKey)key);
             _beatmapIsMissing = invalid;
             if (invalid) _downloadBeatmapPanel.SetHash(info.SongHash);
             _isWorking = false;
@@ -194,7 +208,7 @@ namespace BeatLeader.Components {
                 return;
             }
             if (!_isInitialized || _header is null || _header.FileStatus is Corrupted) return;
-            _ = _menuLoader!.StartReplayAsync(_header.LoadReplayAsync(default).Result!, _miniProfile.Player);
+            _starter!.StartReplay( _header.LoadReplayAsync(default).Result!, _miniProfile.Player!);
         }
 
         #endregion

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using BeatLeader.API;
 using BeatLeader.API.Methods;
 using BeatLeader.Manager;
 using BeatLeader.Models;
@@ -49,6 +50,10 @@ namespace BeatLeader.DataManager {
 
         public static bool IsCurrentPlayerInClan(Clan clan) {
             return HasProfile && Profile.clans.Any(profileClan => profileClan.id == clan.id);
+        }
+
+        public static bool IsCurrentPlayerTopClan(Clan clan) {
+            return HasProfile && Profile.clans.Length > 0 && Profile.clans[0].id == clan.id;
         }
 
         public static bool TryGetUserId(out string userId) {
@@ -119,6 +124,11 @@ namespace BeatLeader.DataManager {
         #endregion
 
         #region Events
+        
+        private void OnMainServerChanged(BeatLeaderServer value) {
+            Authentication.ResetLogin();
+            UserRequest.SendRequest();
+        }
 
         private static void OnAddFriendWasPressed(Player player) {
             AddFriendRequest.SendRequest(player);
@@ -160,7 +170,7 @@ namespace BeatLeader.DataManager {
 
         private static void OnUploadRequestStateChanged(API.RequestState state, Score result, string failReason) {
             if (state is not API.RequestState.Finished) return;
-            Profile = result.player;
+            Profile = result.Player;
         }
 
         #endregion

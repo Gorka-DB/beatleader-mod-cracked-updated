@@ -31,6 +31,7 @@ namespace BeatLeader {
         #region Enabled
 
         public bool Enabled = ConfigDefaults.Enabled;
+        public bool NoticeboardEnabled = true;
 
         #endregion
         
@@ -40,10 +41,17 @@ namespace BeatLeader {
 
         #endregion
 
+        #region BeatLeaderServer
+
+        [UseConverter]
+        public BeatLeaderServer MainServer = ConfigDefaults.MainServer;
+
+        #endregion
+
         #region ScoresContext
 
         [UseConverter]
-        public ScoresContext ScoresContext = ConfigDefaults.ScoresContext;
+        public int ScoresContext = ConfigDefaults.ScoresContext;
 
         #endregion
 

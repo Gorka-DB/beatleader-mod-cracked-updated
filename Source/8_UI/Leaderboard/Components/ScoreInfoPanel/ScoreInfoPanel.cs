@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using BeatLeader.API.Methods;
+using BeatLeader.DataManager;
 using BeatLeader.Manager;
 using BeatLeader.Models;
 using BeatSaberMarkupLanguage.Attributes;
@@ -8,7 +9,7 @@ using JetBrains.Annotations;
 using UnityEngine;
 
 namespace BeatLeader.Components {
-    internal class ScoreInfoPanel : AbstractReeModal<Score> {
+    internal class ScoreInfoPanel : AbstractReeModal<(Score, IReplayerStarter)> {
         #region Components
 
         [UIValue("mini-profile"), UsedImplicitly]
@@ -72,11 +73,13 @@ namespace BeatLeader.Components {
 
             ScoreStatsRequest.AddStateListener(OnScoreStatsRequestStateChanged);
             LeaderboardState.ScoreInfoPanelTabChangedEvent += OnTabWasSelected;
+            HiddenPlayersCache.HiddenPlayersUpdatedEvent += RefreshPlayer;
             OnTabWasSelected(LeaderboardState.ScoreInfoPanelTab);
         }
 
         protected override void OnDispose() {
             ScoreStatsRequest.RemoveStateListener(OnScoreStatsRequestStateChanged);
+            HiddenPlayersCache.HiddenPlayersUpdatedEvent -= RefreshPlayer;
             LeaderboardState.ScoreInfoPanelTabChangedEvent -= OnTabWasSelected;
         }
 
@@ -85,7 +88,8 @@ namespace BeatLeader.Components {
         #region Events
 
         protected override void OnResume() {
-            SetScore(Context);
+            SetScore(Context.Item1);
+            _replayPanel.Setup(Context.Item2);
         }
 
         private void OnReplayDownloadStateChangedEvent(bool state) {
@@ -173,11 +177,15 @@ namespace BeatLeader.Components {
         public void SetScore(Score score) {
             _score = score;
             _scoreStatsUpdateRequired = true;
-            _miniProfile.SetPlayer(score.player);
+            _miniProfile.SetPlayer(score.Player);
             _scoreOverviewPage1.SetScore(score);
             _replayPanel.SetScore(score);
             _controls.Reset();
             UpdateVisibility();
+        }
+
+        private void RefreshPlayer() {
+            _miniProfile.SetPlayer(_score.Player);
         }
 
         #endregion

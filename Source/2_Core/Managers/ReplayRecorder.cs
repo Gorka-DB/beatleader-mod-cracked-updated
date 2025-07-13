@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
 using BeatLeader.Core.Managers.NoteEnhancer;
@@ -73,6 +73,9 @@ namespace BeatLeader {
 
         [Inject, UsedImplicitly]
         private BeatmapObjectManager _beatmapObjectManager;
+
+        [Inject, UsedImplicitly]
+        private VariableMovementDataProvider _movementDataProvider;
 
         [Inject, UsedImplicitly]
         private BeatmapObjectSpawnController _beatSpawnController;
@@ -282,15 +285,15 @@ namespace BeatLeader {
             controllerRot = xrRigTransform.LocalToWorldRotation(controllerRot);
             var controllerTransform = new ReeTransform(controllerPos, controllerRot);
 
-            localPosition = controllerTransform.WorldToLocalPosition(saber.handlePos);
-            localRotation = controllerTransform.WorldToLocalRotation(saber.handleRot);
+            localPosition = controllerTransform.WorldToLocalPosition(saber._handleTransform.position);
+            localRotation = controllerTransform.WorldToLocalRotation(saber._handleTransform.rotation);
         }
 
         #endregion
 
         #region Note Events
 
-        private void OnNoteWasAdded(NoteData noteData, BeatmapObjectSpawnMovementData.NoteSpawnData spawnData, float rotation) {
+        private void OnNoteWasAdded(NoteData noteData, NoteSpawnData spawnData) {
             if (_stopRecording) return;
 
             var noteId = _noteId++;
@@ -426,7 +429,7 @@ namespace BeatLeader {
         #region Misc. Events
 
         private void OnBeatSpawnControllerDidInit() {
-            _replay.info.jumpDistance = _beatSpawnController.jumpDistance;
+            _replay.info.jumpDistance = _movementDataProvider.jumpDistance;
         }
 
         private void OnPlayerHeightChange(float height) {

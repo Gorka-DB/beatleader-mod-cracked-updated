@@ -1,16 +1,28 @@
 ﻿using System;
 using System.Collections;
+using System.Threading.Tasks;
 using BeatLeader.API.Methods;
 using BeatLeader.Models;
 using UnityEngine;
 
 namespace BeatLeader.DataManager {
-    internal class LeaderboardInfoManager : MonoBehaviour {
+    public class LeaderboardInfoManager : MonoBehaviour {
         #region Start
 
+        private static TaskCompletionSource<bool> TaskSource = new TaskCompletionSource<bool>();
+        public static Task RefreshTask() {
+            return TaskSource.Task;
+        }
+
         private void Start() {
-            StartCoroutine(FullCacheUpdateTask());
+            StartCoroutine(RunCoroutine(FullCacheUpdateTask(), TaskSource));
             LeaderboardState.AddSelectedBeatmapListener(OnSelectedBeatmapWasChanged);
+        }
+
+        private IEnumerator RunCoroutine(IEnumerator coroutine, TaskCompletionSource<bool> tcs) {
+            if (tcs.Task.IsCompleted) yield break;
+            yield return StartCoroutine(coroutine);
+            tcs.SetResult(true);
         }
 
         private void OnDestroy() {
@@ -23,7 +35,7 @@ namespace BeatLeader.DataManager {
 
         private string _lastSelectedHash;
 
-        private void OnSelectedBeatmapWasChanged(bool selectedAny, LeaderboardKey leaderboardKey, IDifficultyBeatmap beatmap) {
+        private void OnSelectedBeatmapWasChanged(bool selectedAny, LeaderboardKey leaderboardKey, BeatmapKey key, BeatmapLevel level) {
             if (!selectedAny || leaderboardKey.Hash.Equals(_lastSelectedHash)) return;
             _lastSelectedHash = leaderboardKey.Hash;
             UpdateLeaderboardsByHash(leaderboardKey.Hash);

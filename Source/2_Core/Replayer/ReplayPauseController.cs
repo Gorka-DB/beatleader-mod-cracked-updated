@@ -44,27 +44,16 @@ namespace BeatLeader.Replayer {
             _vrPlatformHelper.hmdUnmountedEvent -= HandleHMDUnmounted;
             _vrPlatformHelper.inputFocusWasCapturedEvent -= HandleInputFocusWasLost;
             _pauseButtonTrigger.menuButtonTriggeredEvent -= HandleMenuButtonTriggered;
-            SubscribeStandardEvents();
         }
 
         private void UnsubscribeStandardEvents() {
-            _vrPlatformHelper.inputFocusWasCapturedEvent -= _pauseController.HandleInputFocusWasCaptured;
+            _vrPlatformHelper.inputFocusWasCapturedEvent -= _pauseController.HandleFocusWasCaptured;
             _vrPlatformHelper.hmdUnmountedEvent -= _pauseController.HandleHMDUnmounted;
             _pauseMenuManager.didFinishResumeAnimationEvent -= _pauseController.HandlePauseMenuManagerDidFinishResumeAnimation;
             _pauseMenuManager.didPressContinueButtonEvent -= _pauseController.HandlePauseMenuManagerDidPressContinueButton;
             _pauseMenuManager.didPressRestartButtonEvent -= _pauseController.HandlePauseMenuManagerDidPressRestartButton;
             _levelStartController.levelDidStartEvent -= _pauseController.HandleLevelDidStart;
             _levelStartController.levelWillStartIntroEvent -= _pauseController.HandleLevelWillStartIntro;
-        }
-
-        private void SubscribeStandardEvents() {
-            _vrPlatformHelper.inputFocusWasCapturedEvent += _pauseController.HandleInputFocusWasCaptured;
-            _vrPlatformHelper.hmdUnmountedEvent += _pauseController.HandleHMDUnmounted;
-            _pauseMenuManager.didFinishResumeAnimationEvent += _pauseController.HandlePauseMenuManagerDidFinishResumeAnimation;
-            _pauseMenuManager.didPressContinueButtonEvent += _pauseController.HandlePauseMenuManagerDidPressContinueButton;
-            _pauseMenuManager.didPressRestartButtonEvent += _pauseController.HandlePauseMenuManagerDidPressRestartButton;
-            _levelStartController.levelDidStartEvent += _pauseController.HandleLevelDidStart;
-            _levelStartController.levelWillStartIntroEvent += _pauseController.HandleLevelWillStartIntro;
         }
 
         #endregion

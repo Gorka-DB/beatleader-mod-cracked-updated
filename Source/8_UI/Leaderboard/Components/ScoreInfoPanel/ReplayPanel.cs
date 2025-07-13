@@ -40,6 +40,12 @@ namespace BeatLeader.Components {
 
         #region Initialize/Dispose
 
+        private IReplayerStarter? _replayerStarter;
+        
+        public void Setup(IReplayerStarter starter) {
+            _replayerStarter = starter;
+        }
+        
         protected override void OnInstantiate() {
             _settingsPanel = Instantiate<ReplayerSettingsPanel>(transform);
         }
@@ -72,7 +78,7 @@ namespace BeatLeader.Components {
         #region StartReplay
 
         private void StartReplay(Replay replay) {
-            _ = ReplayerMenuLoader.Instance!.StartReplayFromLeaderboardAsync(replay, _score!.player);
+            _replayerStarter!.StartReplay(replay, _score!.Player);
         }
 
         #endregion
@@ -82,8 +88,8 @@ namespace BeatLeader.Components {
         private bool _blockIncomingEvents = true;
         private bool _isDownloading;
 
-        private void OnSelectedBeatmapChanged(bool selectedAny, LeaderboardKey leaderboardKey, IDifficultyBeatmap beatmap) {
-            _buttonCanBeInteractable = SongCoreInterop.ValidateRequirements(beatmap);
+        private void OnSelectedBeatmapChanged(bool selectedAny, LeaderboardKey leaderboardKey, BeatmapKey key, BeatmapLevel level) {
+            _buttonCanBeInteractable = SongCoreInterop.ValidateRequirements(level, key);
         }
 
         private void OnDownloadProgressChanged(float uploadProgress, float downloadProgress, float overallProgress) {

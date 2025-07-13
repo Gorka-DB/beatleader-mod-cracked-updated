@@ -1,13 +1,13 @@
 ﻿using BeatLeader.DataManager;
 using BeatLeader.UI.BSML_Addons;
 using BeatLeader.Utils;
+using BeatSaberMarkupLanguage.Util;
 using Hive.Versioning;
 using IPA;
 using IPA.Config;
 using IPA.Config.Stores;
 using IPA.Loader;
 using JetBrains.Annotations;
-using UnityEngine;
 using IPALogger = IPA.Logging.Logger;
 
 namespace BeatLeader {
@@ -52,15 +52,14 @@ namespace BeatLeader {
         [OnStart]
         [UsedImplicitly]
         public void OnApplicationStart() {
-            ObserveEnabled();
-            SettingsPanelUI.AddTab();
-            BSMLAddonsLoader.LoadAddons();
+            OnEnabledChanged(PluginConfig.Enabled);
+            MainMenuAwaiter.MainMenuInitializing += MainMenuInit;
             InteropLoader.Init();
         }
 
-        private static void ObserveEnabled() {
-            PluginConfig.OnEnabledChangedEvent += OnEnabledChanged;
-            OnEnabledChanged(PluginConfig.Enabled);
+        public static void MainMenuInit() {
+            SettingsPanelUI.AddTab();
+            BSMLAddonsLoader.LoadAddons();
         }
 
         private static void OnEnabledChanged(bool enabled) {

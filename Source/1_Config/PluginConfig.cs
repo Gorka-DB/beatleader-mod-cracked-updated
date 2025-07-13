@@ -1,18 +1,39 @@
-using System;
+﻿using System;
 using BeatLeader.Models;
 
 namespace BeatLeader {
     internal static class PluginConfig {
         #region Enabled
 
-        public static event Action<bool> OnEnabledChangedEvent;
-
         public static bool Enabled {
             get => ConfigFileData.Instance.Enabled;
             set {
                 if (ConfigFileData.Instance.Enabled == value) return;
                 ConfigFileData.Instance.Enabled = value;
-                OnEnabledChangedEvent?.Invoke(value);
+            }
+        }
+
+        #endregion
+
+        #region Noticeboard
+
+        public static bool NoticeboardEnabled {
+            get => ConfigFileData.Instance.NoticeboardEnabled;
+            set {
+                if (ConfigFileData.Instance.NoticeboardEnabled == value) return;
+                ConfigFileData.Instance.NoticeboardEnabled = value;
+            }
+        }
+
+        #endregion
+
+        #region MainServer
+
+        public static BeatLeaderServer MainServer {
+            get => ConfigFileData.Instance.MainServer;
+            set {
+                if (ConfigFileData.Instance.MainServer.Equals(value)) return;
+                ConfigFileData.Instance.MainServer = value;
             }
         }
 
@@ -20,15 +41,21 @@ namespace BeatLeader {
 
         #region ScoresContext
 
-        public static event Action<ScoresContext> ScoresContextChangedEvent;
+        public static event Action<int> ScoresContextChangedEvent;
 
-        public static ScoresContext ScoresContext {
+        public static int ScoresContext {
             get => ConfigFileData.Instance.ScoresContext;
             set {
                 if (ConfigFileData.Instance.ScoresContext.Equals(value)) return;
                 ConfigFileData.Instance.ScoresContext = value;
                 ScoresContextChangedEvent?.Invoke(value);
             }
+        }
+
+        public static event Action ScoresContextListChangedEvent;
+
+        public static void NotifyScoresContextListWasChanged() {
+            ScoresContextListChangedEvent?.Invoke();
         }
 
         #endregion

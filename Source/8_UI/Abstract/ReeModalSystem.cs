@@ -17,9 +17,9 @@ namespace BeatLeader {
         private static event Action InterruptAllEvent;
 
         [PublicAPI]
-        public static void OpenModal<T>(Transform screenChild, object state) where T : IReeModal {
+        public static void OpenModal<T>(Transform screenChild, object state, bool interruptActiveModals = true) where T : IReeModal {
             var screen = screenChild.GetComponentInParent<Screen>();
-            OpenModal<T>(screen, state);
+            OpenModal<T>(screen, state, interruptActiveModals);
         }
 
         public static void OpenModal<T>(Screen screen, object state, bool interruptActiveModals = true) where T : IReeModal {
@@ -37,9 +37,14 @@ namespace BeatLeader {
 
             if (interruptActiveModals) {
                 InterruptAllEvent?.Invoke();
+                controller.OpenModalAfterFrame<T>(state);
+            } else {
+                controller.OpenModal<T>(state);
             }
+        }
 
-            controller.OpenModal<T>(state);
+        public static void CloseAll() {
+            InterruptAllEvent?.Invoke();
         }
 
         public static void ForceUpdateAll() {
@@ -68,6 +73,10 @@ namespace BeatLeader {
             SceneManager.activeSceneChanged -= OnActiveSceneChanged;
             InterruptAllEvent -= InterruptAll;
             ActiveModals.Remove(_screen.GetHashCode());
+        }
+
+        private void OnDisable() {
+            InterruptAll();
         }
 
         private void OnActiveSceneChanged(Scene from, Scene to) {
@@ -109,6 +118,16 @@ namespace BeatLeader {
             PopOpen(editor, context);
         }
 
+        private void OpenModalAfterFrame<T>(object context) where T : IReeModal {
+            var editor = GetOrInstantiateModal<T>();
+            StartCoroutine(WaitAFrame(editor, context));
+        }
+
+        private IEnumerator WaitAFrame(IReeModal modal, object state) {
+            yield return new WaitForEndOfFrame();
+            PopOpen(modal, state);
+        }
+
         private void PopOpen(IReeModal modal, object state) {
             if (!_hasActiveModal) {
                 _stack.Push((modal, state));
@@ -131,7 +150,7 @@ namespace BeatLeader {
         }
 
         private void CloseOrPop() {
-            _activeModal.Pause();
+            _activeModal?.Pause();
 
             if (_stack.Count != 0) {
                 OpenImmediately();
@@ -198,7 +217,12 @@ namespace BeatLeader {
         }
 
         private void ShowModal(bool animated = true) {
-            if (_modalView == null) return;
+            if (_modalView == null || _modalView.isShown) return;
+            if (_modalView._viewIsValid) {
+                _modalView.transform.SetParent(Content.transform, false);
+                _modalView._viewIsValid = false;
+            }
+            _modalView._animateParentCanvas = true;
             _modalView.Show(animated, true);
         }
 

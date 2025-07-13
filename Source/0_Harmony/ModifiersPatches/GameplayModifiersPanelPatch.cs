@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using BeatLeader.Models;
 using BeatLeader.Utils;
 using HarmonyLib;
 using JetBrains.Annotations;
-using Polyglot;
+using BGLib.Polyglot;
 using TMPro;
 using UnityEngine;
 
@@ -16,6 +16,7 @@ namespace BeatLeader {
         public static bool isPatchRequired = false;
         public static bool hasModifiers = false;
         public static ModifiersMap ModifiersMap;
+        public static ModifiersRating? ModifiersRating;
         
         [UsedImplicitly]
         private static void Postfix(

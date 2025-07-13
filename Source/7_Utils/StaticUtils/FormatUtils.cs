@@ -20,11 +20,10 @@ namespace BeatLeader {
         }
 
         #endregion
-        
+
         #region RankedStatus
 
-        public static readonly IReadOnlyList<RankedStatus> NegativeModifiersAppliers = new RankedStatus[]
-        {
+        public static readonly IReadOnlyList<RankedStatus> NegativeModifiersAppliers = new RankedStatus[] {
             RankedStatus.Nominated,
             RankedStatus.Qualified,
             RankedStatus.Ranked
@@ -85,69 +84,6 @@ namespace BeatLeader {
 
         #endregion
 
-        #region GetHeadsetName
-
-        public static string GetHeadsetNameById(int id) {
-            return id switch {
-                1 => "Rift",
-                2 => "Vive",
-                4 => "Vive Pro",
-                8 => "WMR",
-                16 => "Rift S",
-                32 => "Quest",
-                64 => "Index",
-                65 => "Controllable",
-                128 => "Vive Cosmos",
-                256 => "Quest 2",
-                512 => "Quest 3",
-                _ => "Unknown HMD"
-            };
-        }
-
-        #endregion
-
-        #region GetControllerName
-
-        public static string GetControllerNameById(int id) {
-            return id switch {
-                0 => "Unknown",
-                1 => "Oculus Touch",
-                16 => "Oculus Touch 2",
-                256 => "Oculus Touch", //Quest 2
-                2 => "Vive Wands", //Vive
-                4 => "Vive Pro Wands", //Vive Pro
-                8 => "WMR Controllers", //WMR
-                9 => "Odyssey Controllers", //Odyssey
-                10 => "HP Motion",
-                33 => "Pico Neo 3 Controllers", //Pico Neo 3
-                34 => "Pico Neo 2 Controllers", //Pico Neo 2
-                35 => "Vive Pro 2 Wands", //Vive Pro 2
-                37 => "Miramar",
-                44 => "Disco",
-                61 => "Touch Pro", //Quest Pro
-                62 => "Vive Tracker",
-                63 => "Vive Tracker 2",
-                64 => "Knuckles",
-                65 => "Nolo",
-                66 => "Pico Phoenix",
-                67 => "Hands",
-                68 => "Vive Tracker 3",
-                69 => "Pimax",
-                70 => "Huawei",
-                71 => "Polaris",
-                72 => "Tundra",
-                73 => "Cry",
-                74 => "E4",
-                75 => "Gamepad",
-                76 => "Joy-Con",
-                77 => "Steam Deck",
-                128 => "Cosmos Controllers",
-                _ => "Unknown"
-            };
-        }
-
-        #endregion
-
         #region DiffForName
 
         public static int DiffIdForDiffName(string diffName) {
@@ -197,8 +133,16 @@ namespace BeatLeader {
         #region GetRelativeTimeString
 
         public static TimeSpan GetRelativeTime(string timeSet) {
-            var dateTime = long.Parse(timeSet).AsUnixTime();
-            return DateTime.UtcNow - dateTime;
+            var dateTime = long.Parse(timeSet);
+            return GetRelativeTime(dateTime);
+        }
+
+        public static TimeSpan GetRelativeTime(long timeSet) {
+            return DateTime.UtcNow - timeSet.AsUnixTime();
+        }
+
+        public static string GetRelativeTimeString(long timeSet, bool compact) {
+            return GetRelativeTimeString(GetRelativeTime(timeSet), compact);
         }
 
         public static string GetRelativeTimeString(string timeSet, bool compact) {
@@ -210,11 +154,11 @@ namespace BeatLeader {
             return $"{t.Year}.{Zero(t.Month)}{t.Month}.{Zero(t.Day)}{t.Day} {Zero(t.Hour)}{t.Hour}:{Zero(t.Minute)}{t.Minute}";
             static string Zero(int number) => number > 9 ? "" : "0";
         }
-        
+
         public static string GetDateTimeString(string timeSet) {
             return GetDateTimeString(long.Parse(timeSet));
         }
-        
+
         public static string GetRelativeTimeString(TimeSpan timeSpan, bool compact) {
             return TimeLocalizationUtils.GetRelativeTimeStringLocalizedWithFont(timeSpan, compact);
         }
@@ -223,8 +167,7 @@ namespace BeatLeader {
 
         #region FormatSongTime
 
-        public static string FormatSongTime(float time, float totalTime)
-        {
+        public static string FormatSongTime(float time, float totalTime) {
             var minutes = Mathf.FloorToInt(time / 60);
             var seconds = Mathf.FloorToInt(time % 60);
             var totalMinutes = Mathf.FloorToInt(totalTime / 60);
@@ -288,7 +231,7 @@ namespace BeatLeader {
         private static readonly Color HighAccColor = new Color(1f, 0.39f, 0.28f);
 
         public static string FormatAcc(float value) {
-            return $"<color=#{GetAccColorString(value)}>{value * 100.0f:F2}<size=70%>%</size>";
+            return value == 0f ? "<size=90%>Not Ready" : $"<color=#{GetAccColorString(value)}>{value * 100.0f:F2}<size=70%>%</size>";
         }
 
         private static string GetAccColorString(float acc) {

@@ -69,7 +69,7 @@ namespace BeatLeader.Components {
             public AbstractDataCell Init(IReplayHeader header) {
                 ReplayHeader = header;
                 if (!_isInitialized) {
-                    PersistentSingleton<BSMLParser>.instance.Parse(markup, gameObject, this);
+                    BSMLParser.Instance.Parse(markup, gameObject, this);
                     ((SelectableCell)this).SetField("_wasPressedSignal", clickSignal);
                     gameObject.AddComponent<Touchable>();
                     name = nameof(AbstractDataCell);
@@ -159,16 +159,6 @@ namespace BeatLeader.Components {
 
         [UsedImplicitly]
         private class ReplayDataCell : AbstractDataCell {
-            static ReplayDataCell() {
-                ColorUtility.TryParseHtmlString("#00C0FFFF", out selectColor);
-                highlightSelectedColor = selectColor.ColorWithAlpha(0.75f);
-            }
-
-            private static readonly Color selectColor;
-            private static readonly Color highlightSelectedColor;
-            private static readonly Color highlightColor = Color.white.ColorWithAlpha(0.2f);
-            private static readonly Color idlingColor = Color.clear;
-
             public bool ShowBeatmapName {
                 set {
                     if (ReplayHeader?.ReplayInfo is not { } info) return;
@@ -179,7 +169,23 @@ namespace BeatLeader.Components {
                 }
             }
 
+            private static Color _selectColor;
+            private static Color _highlightSelectedColor;
+            private static Color _highlightColor;
+            private static Color _idlingColor;
+            private static bool _colorsInitialized;
+
+            private void InitColors() {
+                if (_colorsInitialized) return;
+                ColorUtility.TryParseHtmlString("#00C0FFFF", out _selectColor);
+                _highlightSelectedColor = _selectColor.ColorWithAlpha(0.75f);
+                _highlightColor = Color.white.ColorWithAlpha(0.2f);
+                _idlingColor = Color.clear;
+                _colorsInitialized = true;
+            }
+
             protected override void OnConstruct() {
+                InitColors();
                 if (ReplayHeader!.FileStatus is FileStatus.Corrupted
                     || ReplayHeader.ReplayInfo is not { } info) return;
                 ShowBeatmapName = false;
@@ -205,10 +211,10 @@ namespace BeatLeader.Components {
 
             #region Colors
 
-            protected override Color HighlightColor => highlightColor;
-            protected override Color HighlightSelectedColor => highlightSelectedColor;
-            protected override Color SelectColor => selectColor;
-            protected override Color IdlingColor => idlingColor;
+            protected override Color HighlightColor => _highlightColor;
+            protected override Color HighlightSelectedColor => _highlightSelectedColor;
+            protected override Color SelectColor => _selectColor;
+            protected override Color IdlingColor => _idlingColor;
 
             #endregion
         }
@@ -264,7 +270,7 @@ namespace BeatLeader.Components {
         #region Init & Dispose
 
         protected override void OnInitialize() {
-            _tableView = _replaysList.tableView;
+            _tableView = _replaysList.TableView;
             _tableView.SetDataSource(this, true);
             _tableView.didSelectCellWithIdxEvent += HandleCellSelected;
             Refresh();
@@ -280,7 +286,7 @@ namespace BeatLeader.Components {
 
         #region TableView
 
-        float TableView.IDataSource.CellSize() => AbstractDataCell.CellHeight;
+        float TableView.IDataSource.CellSize(int idx) => AbstractDataCell.CellHeight;
 
         int TableView.IDataSource.NumberOfCells() => _replayHeaders?.Count ?? 0;
 
@@ -300,11 +306,11 @@ namespace BeatLeader.Components {
         #endregion
 
         #region Data
-        
+
         private IList<IReplayHeader>? _replayHeaders;
 
         public bool showBeatmapNameIfCorrect = true;
-        
+
         public void SetData(IList<IReplayHeader> headers) {
             _replayHeaders = headers;
             Refresh();

@@ -24,12 +24,21 @@ namespace BeatLeader.Components {
             textComponent.richText = richText;
         }
 
+        protected override void OnInitialize() {
+            textComponent.text = string.Empty;
+        }
+
         #endregion
 
         #region Implementation
 
         public override void SetValue(object? value) {
-            textComponent.text = value == null ? "" : _formatter.Invoke(value);
+            if (value == null) {
+                textComponent.text = string.Empty;
+            } else {
+                textComponent.text = _formatter.Invoke(value);
+            }
+
             isEmpty = false;
         }
 

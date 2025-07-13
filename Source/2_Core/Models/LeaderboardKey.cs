@@ -26,10 +26,13 @@
             );
         }
 
-        public static LeaderboardKey FromBeatmap(IDifficultyBeatmap beatmap) {
-            var hash = beatmap.level.levelID.Replace(CustomLevelLoader.kCustomLevelPrefixId, "");
-            var diff = beatmap.difficulty.ToString();
-            var mode = beatmap.parentDifficultyBeatmapSet.beatmapCharacteristic.serializedName;
+        public static LeaderboardKey FromBeatmap(BeatmapKey beatmapKey) {
+            var hash = beatmapKey.levelId.Replace(CustomLevelLoader.kCustomLevelPrefixId, "");
+            if (hash.Length > 40) {
+                hash = hash.Substring(0, 40);
+            }
+            var diff = beatmapKey.difficulty.ToString();
+            var mode = beatmapKey.beatmapCharacteristic.serializedName;
             return new LeaderboardKey(hash, diff, mode);
         }
 

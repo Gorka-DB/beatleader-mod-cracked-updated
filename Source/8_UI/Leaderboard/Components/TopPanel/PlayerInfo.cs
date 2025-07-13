@@ -42,8 +42,8 @@ namespace BeatLeader.Components {
 
         private void OnUploadRequestStateChanged(API.RequestState state, Score result, string failReason) {
             if (state is not API.RequestState.Finished) return;
-            OnProfileUpdated(result.player);
-            user.player.contextExtensions = result.player.contextExtensions;
+            OnProfileUpdated(result.Player);
+            user.player.contextExtensions = result.Player.contextExtensions;
         }
 
         private void OnProfileRequestStateChanged(API.RequestState state, User result, string failReason) {
@@ -79,7 +79,7 @@ namespace BeatLeader.Components {
             _countryFlag.SetCountry(player.country);
             _avatar.SetAvatar(player.avatar, player.profileSettings);
 
-            var contextPlayer = player.ContextPlayer(PluginConfig.ScoresContext.Enum());
+            var contextPlayer = player.ContextPlayer(PluginConfig.ScoresContext);
             NameText = FormatUtils.FormatUserName(player.name);
             GlobalRankText = FormatUtils.FormatRank(contextPlayer.rank, true);
             CountryRankText = FormatUtils.FormatRank(contextPlayer.countryRank, true);
@@ -89,7 +89,7 @@ namespace BeatLeader.Components {
 
         #endregion
 
-        private void ChangeScoreContext(ScoresContext context) {
+        private void ChangeScoreContext(int context) {
             OnProfileUpdated(user.player);
         }
 

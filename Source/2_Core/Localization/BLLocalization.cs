@@ -1,29 +1,25 @@
 ﻿using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
-using Polyglot;
+using BGLib.Polyglot;
 using TMPro;
 using UnityEngine;
+using System.Linq;
 
 namespace BeatLeader {
     public static class BLLocalization {
         #region Initialize
 
-        private static LanguageSO _baseGameLanguageSO;
-        private static bool _initialized;
+        private static Language _baseGameLanguage = Language.English;
 
-        internal static void Initialize(MainSettingsModelSO mainSettingsModel) {
-            if (_initialized) return;
-            _baseGameLanguageSO = mainSettingsModel.language;
-            _baseGameLanguageSO.didChangeEvent += OnBaseGameLanguageDidChange;
+        internal static void Initialize(SettingsManager settingsmanager) {
+            _baseGameLanguage = Localization.Instance.SupportedLanguages.FirstOrDefault(l => l.ToSerializedName() == settingsmanager.settings.misc.language);
             OnBaseGameLanguageDidChange();
-            _initialized = true;
         }
 
         #endregion
 
         #region Language
 
-        private static Language _baseGameLanguage = Language.English;
         private static BLLanguage _blLanguageAnalog = BLLanguage.English;
 
         public static BLLanguage GetCurrentLanguage() {
@@ -31,7 +27,6 @@ namespace BeatLeader {
         }
 
         private static void OnBaseGameLanguageDidChange() {
-            _baseGameLanguage = _baseGameLanguageSO.value;
 
             _blLanguageAnalog = _baseGameLanguage switch {
                 Language.English => BLLanguage.English,
