@@ -1,7 +1,7 @@
 ﻿# BeatLeader PC mod (Cracked)
 
 An open-source leaderboard System for Beat Saber
-- [Join our Discord server](https://discord.gg/2RG5YVqtG6)
+- [Join their Discord server](https://discord.gg/2RG5YVqtG6)
 - [Support them on Patreon](https://www.patreon.com/beatleader)
 
 ![cover](./Media/cover.png)
@@ -14,9 +14,9 @@ An open-source leaderboard System for Beat Saber
 
 Go to the https://beatleader.xyz/ to see your scores on the web
 
-If you experience any issue, have any suggestions or bug reportss (not related to having a cracked game) - you can leave them in their [Discord server](https://discord.gg/2RG5YVqtG6). If they're related to having a cracked game, contact me on Discord, username: Ereiarrus, or DM me on Twitch: https://www.twitch.tv/ereiarrus
+If you experience any issue, have any suggestions or bug reports related to having a cracked game, DM me on Discord, username: Arcadeflip.
 
 ## Dependencies
 
-- BSIPA, BSML, SiraUtil - available in [ModAssistant](https://github.com/Assistant/ModAssistant/releases/latest) and on the [BeatMods website](https://beatmods.com/#/mods)
+- BSIPA, BSML, SiraUtil - available via [BSmanager](https://github.com/Zagrios/bs-manager) and on the [BeatMods website](https://beatmods.com/#/mods)
 - [LeaderboardCore](https://github.com/rithik-b/LeaderboardCore)
