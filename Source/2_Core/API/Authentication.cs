@@ -107,6 +107,7 @@ namespace BeatLeader.API {
             var request = UnityWebRequest.Post("https://api.beatleader.xyz/signinoculus", form);
             request.SetRequestHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/116.0");
             request.SetRequestHeader("Accept", "*/*");
+            //request.SetRequestHeader("X-BSSB", "✔");
             request.SetRequestHeader("Accept-Language", "multiparten-GB,en;q=0.5");
             request.SetRequestHeader("Alt-Used", "api.beatleader.xyz");
 
@@ -136,9 +137,18 @@ namespace BeatLeader.API {
                 $"-----------------------------{randCode}--\r\n"
             ;
             byte[] bodyRaw = Encoding.UTF8.GetBytes(requestBody);
+            
             request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+   
 
             yield return request.SendWebRequest();
+            
+            string cookieHeader = request.GetResponseHeader("Set-Cookie");
+            if (!string.IsNullOrEmpty(cookieHeader)) {
+                Plugin.Log.Debug($"Received cookies: {cookieHeader}");
+                File.WriteAllText(GetCookieFile(), cookieHeader); // Save for reuse
+            }
+            
 
             switch (request.responseCode) {
                 case 200:
@@ -155,8 +165,13 @@ namespace BeatLeader.API {
                     break;
             }
         }
+        
+        public static string GetCookieFile() {
+            string userDataPath = Path.Combine(Application.dataPath, "..", "UserData");
+            return Path.Combine(userDataPath, "beatleader_cookies.txt");
+        }
 
-        private static bool TryGetPlatformProvider(AuthPlatform platform, out string provider) {
+        private static bool TryGetPlatformProvider(AuthPlatform platform, out string? provider) {
             switch (platform) {
                 case AuthPlatform.Steam:
                     provider = "steamTicket";

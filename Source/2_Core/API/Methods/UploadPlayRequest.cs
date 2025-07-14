@@ -42,6 +42,10 @@ namespace BeatLeader.API.Methods {
                 var url = string.Format(WithCookieEndpoint, NetworkingUtils.ToHttpParams(query));
                 var request = UnityWebRequest.Put(url, _compressedData);
                 request.SetRequestHeader("Content-Encoding", "gzip");
+                string cookieFile = Authentication.GetCookieFile();
+                if (File.Exists(cookieFile)) {
+                    request.SetRequestHeader("Cookie", File.ReadAllText(cookieFile));
+                }
                 return request;
             }
 
